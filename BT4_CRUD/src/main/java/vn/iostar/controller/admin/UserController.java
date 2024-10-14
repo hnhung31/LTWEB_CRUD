@@ -15,46 +15,48 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
-import vn.iostar.entity.Category;
-import vn.iostar.services.*;
+import vn.iostar.entity.User;
 import vn.iostar.utils.Constant;
-@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, maxFileSize = 1024 * 1024 * 10,  maxRequestSize = 1024 * 1024 * 50)   // 50MB
-//@MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 1024 * 1024 * 5, maxRequestSize = 1024 * 1024 * 5 * 5)
-@WebServlet(urlPatterns = {"/admin/categories", "/admin/category/insert", "/admin/category/update",
-		"/admin/category/delete"})
-public class CategoryController extends HttpServlet {
+import vn.iostar.services.*;
+
+
+
+@MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 1024 * 1024 * 5, maxRequestSize = 1024 * 1024 * 5 * 5)
+@WebServlet(urlPatterns = {"/admin/users", "/admin/user/insert", "/admin/user/update",
+		"/admin/user/delete"})
+public class UserController extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	public ICategoryServices cateService = new CategoryServices();
+	public IUserServices useService = new UserServices();
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String url = req.getRequestURI();
 		req.setCharacterEncoding("UTF-8");
 		resp.setCharacterEncoding("UTF-8");
 
-		if (url.contains("categories")) {
+		if (url.contains("users")) {
 
-			List<Category> list = cateService.findAll();
-			req.setAttribute("listcate", list);
-			req.getRequestDispatcher("/views/admin/category-list.jsp").forward(req, resp);
+			List<User> list = useService.findAll();
+			req.setAttribute("listuse", list);
+			req.getRequestDispatcher("/views/admin/user-list.jsp").forward(req, resp);
 
-		} else if (url.contains("/admin/category/insert")) {
+		} else if (url.contains("/admin/user/insert")) {
 
-			req.getRequestDispatcher("/views/admin/category-insert.jsp").forward(req, resp);
+			req.getRequestDispatcher("/views/admin/user-insert.jsp").forward(req, resp);
 
-		} else if (url.contains("/admin/category/update")) {
+		} else if (url.contains("/admin/user/update")) {
 
 			int id = Integer.parseInt(req.getParameter("id"));
-			Category category = cateService.findById(id);
-			req.setAttribute("cate", category);
-			req.getRequestDispatcher("/views/admin/category-update.jsp").forward(req, resp);
+			User user = useService.findById(id);
+			req.setAttribute("use", user);
+			req.getRequestDispatcher("/views/admin/user-update.jsp").forward(req, resp);
 
-		} else if (url.contains("/admin/category/delete")) {
+		} else if (url.contains("/admin/user/delete")) {
 			String id = req.getParameter("id");
 			try {
 				if (id != null) {
-					cateService.delete(Integer.parseInt(id));
+					useService.delete(Integer.parseInt(id));
 				}
-				resp.sendRedirect(req.getContextPath() + "/admin/categories");
+				resp.sendRedirect(req.getContextPath() + "/admin/users");
 			} catch (Exception e) {
 
 				e.printStackTrace();
@@ -68,14 +70,16 @@ public class CategoryController extends HttpServlet {
 		resp.setCharacterEncoding("UTF-8");
 		String url = req.getRequestURI();
 
-		if (url.contains("/admin/category/insert")) {
+		if (url.contains("/admin/user/insert")) {
 
-			Category category = new Category();
+			User user = new User();
 
-			String categoryname = req.getParameter("categoryname");
-			int status = Integer.parseInt(req.getParameter("status"));
-			category.setCategoryname(categoryname);
-			category.setStatus(status);
+			String username = req.getParameter("username");
+			String fullname = req.getParameter("fullname");
+			String password = req.getParameter("password");
+			user.setUsername(username);
+			user.setFullname(fullname);
+			user.setPassword(password);
 
 			String fname = "";
 			String uploadPath = Constant.UPLOAD_DIRECTORY;
@@ -94,38 +98,40 @@ public class CategoryController extends HttpServlet {
 
 					part.write(uploadPath + "/" + fname);
 
-					category.setImages(fname);
+					user.setImages(fname);
 				} else {
 
-					category.setImages("avatar.png");
+					user.setImages("avatar.png");
 				}
 			} catch (Exception e) {
 
 				e.printStackTrace();
 			}
 
-			cateService.insert(category);
-			resp.sendRedirect(req.getContextPath() + "/admin/categories");
+			useService.insert(user);
+			resp.sendRedirect(req.getContextPath() + "/admin/users");
 
-		}else if(url.contains("/admin/category/update"))
+		}else if(url.contains("/admin/user/update"))
 
 	{
-		int categoryid = Integer.parseInt(req.getParameter("categoryId"));
-		String categoryname = req.getParameter("categoryname");
-		int status = Integer.parseInt(req.getParameter("status"));
+		int id = Integer.parseInt(req.getParameter("id"));
+		String username = req.getParameter("username");
+		String fullname = req.getParameter("fullname");
+		String password = req.getParameter("password");
 
-		Category category = new Category();
-		category.setCategoryId(categoryid);
-		category.setCategoryname(categoryname);
-		category.setStatus(status);
+		User user = new User();
+		user.setId(id);
+		user.setFullname(fullname);
+		user.setUsername(username);
+		user.setPassword(password);
 		// luu hinh cu
-		Category cateold = cateService.findById(categoryid);
-		String fileold = cateold.getImages();
+		User useold = useService.findById(id);
+		String fileold = useold.getImages();
 		// xu ly images
 		String fname = "";
 		String uploadPath = Constant.UPLOAD_DIRECTORY;
 		File uploadDir = new File(uploadPath);
-		System.out.println(categoryid+" "+ categoryname+" "+fname);
+		System.out.println(id+" "+ fullname+" "+fname);
 		if (uploadDir.exists()) {
 			uploadDir.mkdir();
 		}
@@ -143,17 +149,17 @@ public class CategoryController extends HttpServlet {
 				// up load file
 				part.write(uploadPath + "/" + fname);
 				// ghi ten file vao data
-				category.setImages(fname);
+				user.setImages(fname);
 			} else {
-				category.setImages(fileold);
+				user.setImages(fileold);
 			}
 			
 		} catch (Exception e) {
 
 			e.printStackTrace();
 		}
-		cateService.update(category);
-		resp.sendRedirect(req.getContextPath() + "/admin/categories");
+		useService.update(user);
+		resp.sendRedirect(req.getContextPath() + "/admin/users");
 	}
 }
 	
